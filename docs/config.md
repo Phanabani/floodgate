@@ -1,7 +1,7 @@
 # Config
 
-Floodgate can be configured with a JSON file at `floodgate/config.json`.
-[floodgate/config_example.json](../floodgate/config_example.json) contains
+Floodgate can be configured with a YAML file at `floodgate/config.yml`.
+[floodgate/config_example.yml](../floodgate/config_example.yml) contains
 default values and can be used as a template. `bot_token` is the only required
 field.
 
@@ -9,7 +9,7 @@ field.
 
 ### (root)
 
-Fields in the root JSON object.
+Fields in the root YAML object.
 
 | Key                    | Value                                                                                     |
 |------------------------|-------------------------------------------------------------------------------------------|

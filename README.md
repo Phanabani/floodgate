@@ -43,13 +43,11 @@ poetry install --no-root --no-dev
 
 ### Set up configuration
 
-Create a json file `floodgate/config.json` (or copy [floodgate/config_example.json](floodgate/config_example.json)).
+Create a yaml file `floodgate/config.yml` (or copy [floodgate/config_example.yml](floodgate/config_example.yml)).
 The only value you need to set is the `bot_token`.
 
-```json
-{
-    "bot_token": "YOUR_BOT_TOKEN"
-}
+```yaml
+bot_token: YOUR_BOT_TOKEN
 ```
 
 See [config](#config) for more info.
@@ -86,8 +84,8 @@ Floodgate requires the following permissions to run normally:
 
 ## Config
 
-Floodgate can be configured with a JSON file at `floodgate/config.json`.
-[floodgate/config_example.json](floodgate/config_example.json) contains
+Floodgate can be configured with a YAML file at `floodgate/config.yml`.
+[floodgate/config_example.yml](floodgate/config_example.yml) contains
 default values and can be used as a template. `bot_token` is the only required
 field.
 

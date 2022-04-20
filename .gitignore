@@ -1,5 +1,6 @@
 # Project
-config.json
+config.yml
+config.yaml
 logs/
 *.db
 *.db-journal

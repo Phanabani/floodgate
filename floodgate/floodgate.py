@@ -4,8 +4,10 @@ import sys
 
 import discord
 import discord.ext.commands as commands
+import yaml
+from yaml import Loader as YamlLoader
 
-from floodgate.config import *
+from floodgate.config import Config
 
 __all__ = ["Floodgate", "run_bot"]
 
@@ -14,7 +16,7 @@ logger = logging.getLogger("floodgate")
 
 # noinspection PyMethodMayBeStatic
 class Floodgate(commands.Bot):
-    def __init__(self, config: ConfigBot):
+    def __init__(self, config: Config._Bot):
 
         intents = discord.Intents(guilds=True, members=True, messages=True)
         allowed_mentions = discord.AllowedMentions(users=True)
@@ -69,8 +71,9 @@ class Floodgate(commands.Bot):
 
 def run_bot():
     # Load config
-    config_path = Path(__file__).parent / "config.json"
-    config = Config.parse_file(config_path)
+    config_path = Path(__file__).parent / "config.yml"
+    with config_path.open() as f:
+        config = Config.parse_obj(yaml.load(f, YamlLoader))
 
     # Floodgate logging
     logger = logging.getLogger("floodgate")

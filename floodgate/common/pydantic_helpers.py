@@ -30,8 +30,8 @@ def maybe_relative_path(root_path: Path, path: Union[Path, str]):
     return path
 
 
-def validator_maybe_relative_path(root_path: Path):
+def validator_maybe_relative_path(field: str, root_path: Path):
     def f(path: Union[Path, str]):
         return maybe_relative_path(root_path, path)
 
-    return validator("output_file", allow_reuse=True)(f)
+    return validator(field, allow_reuse=True)(f)

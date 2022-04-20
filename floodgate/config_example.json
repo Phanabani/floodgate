@@ -2,7 +2,18 @@
     "bot_token": "YOUR_BOT_TOKEN",
     "bot": {
         "command_prefix": "!floodgate ",
-        "description": "A Discord bot that allows messages in channels for only a specified amount of time."
+        "description": "A Discord bot that allows messages in channels for only a specified amount of time.",
+        "modules": {
+            "floodgate": {
+                "channels": {
+                    "123456789012345678": {
+                        "timezone": "America/New_York",
+                        "gate_open_time": "2:30 pm",
+                        "gate_open_duration": "5 min"
+                    }
+                }
+            }
+        }
     },
     "logging": {
         "floodgate_logging_level": "INFO",

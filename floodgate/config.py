@@ -9,11 +9,7 @@ from pydantic import BaseModel, Field, SecretStr, conint, validator
 
 import floodgate
 
-__all__ = [
-    'Config',
-    'ConfigBot',
-    'ConfigLogging'
-]
+__all__ = ["Config"]
 
 _root_path = Path(floodgate.__path__[0])
 
@@ -26,51 +22,55 @@ def maybe_relative_path(path: Union[Path, str]):
     return path
 
 
-class ConfigBot(BaseModel):
-    command_prefix: str = '!floodgate '
-    description: str = 'A Discord bot that allows messages in channels for only a specified amount of time.'
-
-
-_logging_levels = Literal[
-    'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
-]
-
-
-class ConfigLogging(BaseModel):
-
-    class Config:
-        allow_mutation = False
-        validate_all = True
-        keep_untouched = (cached_property,)
-
-    floodgate_logging_level: _logging_levels = 'INFO'
-    discord_logging_level: _logging_levels = 'WARNING'
-    output_file: Path = Path('./logs/floodgate.log')
-    when: Literal['S', 'M', 'H', 'D', 'midnight'] = 'midnight'
-    interval: Annotated[int, conint(ge=1)] = 1
-    backup_count: Annotated[int, conint(ge=0)] = 7
-    format: str = "%(asctime)s %(levelname)s %(name)s | %(message)s"
-
-    _normalize_output_file = validator('output_file', allow_reuse=True)(maybe_relative_path)
-
-    @cached_property
-    def formatter(self):
-        return logging.Formatter(self.format)
-
-    @cached_property
-    def handler(self):
-        self.output_file.parent.mkdir(parents=True, exist_ok=True)
-        handler = TimedRotatingFileHandler(
-            filename=self.output_file,
-            when=self.when,
-            interval=self.interval,
-            backupCount=self.backup_count,
-        )
-        handler.setFormatter(self.formatter)
-        return handler
+_logging_levels = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 
 class Config(BaseModel):
+    version: int = 120
+
     bot_token: SecretStr
-    bot: Annotated[ConfigBot, Field(default_factory=ConfigBot)]
-    logging: Annotated[ConfigLogging, Field(default_factory=ConfigLogging)]
+
+    class _Bot(BaseModel):
+        command_prefix: str = "!floodgate "
+        description: str = "A Discord bot that allows messages in channels for only a specified amount of time."
+
+    bot: _Bot = Field(default_factory=_Bot)
+
+    class _Logging(BaseModel):
+        class Config:
+            allow_mutation = False
+            validate_all = True
+            keep_untouched = (cached_property,)
+
+        floodgate_logging_level: _logging_levels = "INFO"
+        discord_logging_level: _logging_levels = "WARNING"
+        output_file: Path = Path("./logs/floodgate.log")
+        when: Literal["S", "M", "H", "D", "midnight"] = "midnight"
+        interval: Annotated[int, conint(ge=1)] = 1
+        backup_count: Annotated[int, conint(ge=0)] = 7
+        format: str = "%(asctime)s %(levelname)s %(name)s | %(message)s"
+
+        _normalize_output_file = validator("output_file", allow_reuse=True)(
+            maybe_relative_path
+        )
+
+        @cached_property
+        def formatter(self):
+            return logging.Formatter(self.format)
+
+        @cached_property
+        def handler(self):
+            self.output_file.parent.mkdir(parents=True, exist_ok=True)
+            handler = TimedRotatingFileHandler(
+                filename=self.output_file,
+                when=self.when,
+                interval=self.interval,
+                backupCount=self.backup_count,
+            )
+            handler.setFormatter(self.formatter)
+            return handler
+
+    logging: _Logging = Field(default_factory=_Logging)
+
+
+Config.update_forward_refs(**Config.__dict__)

@@ -10,7 +10,7 @@ __all__ = [
     "Factory",
     "instance_list_factory",
     "maybe_relative_path",
-    "validator",
+    "validator_partial",
     "FieldConverterError",
     "FieldConverter",
     "update_forward_refs_recursive",
@@ -39,7 +39,7 @@ def maybe_relative_path(path: Union[Path, str], root_path: Path):
     return path
 
 
-def validator(
+def validator_partial(
     field: str,
     func: Callable[[Any, ...], Any],
     *func_args,

@@ -83,7 +83,9 @@ class Config(BaseModel):
         backup_count: Annotated[int, conint(ge=0)] = 7
         format: str = "%(asctime)s %(levelname)s %(name)s | %(message)s"
 
-        _norm_output_file = validator("output_file", maybe_relative_path, root_path)
+        _norm_output_file = validator_partial(
+            "output_file", maybe_relative_path, root_path
+        )
 
         @cached_property
         def formatter(self):

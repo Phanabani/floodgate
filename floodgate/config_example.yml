@@ -3,13 +3,29 @@ bot_token: YOUR_BOT_TOKEN
 bot:
   command_prefix: "!floodgate "
   description: A Discord bot that allows messages in channels for only a specified amount of time.
+
   modules:
     floodgate:
       channels:
+
         123456789012345678:
-          timezone: America/New_York
-          gate_open_time: 2:30 pm
-          gate_open_duration: 5 min
+          gate_open:
+            timezone: America/New_York
+            time: 2:30 pm
+            duration: 5 min
+          messages:
+            open: Opened on schedule
+            close: Closed on schedule
+
+        876543210987654321:
+          gate_open:
+            timezone: America/New_York
+            time_window_start: 7 am
+            time_window_end: 10 pm
+            duration: 5 min
+          messages:
+            open: Opened randomly
+            close: Closed randomly
 
 logging:
   floodgate_logging_level: INFO

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Callable, Optional, Type, TypeVar, Union
+from typing import Any, Callable, Type, TypeVar, Union
 
 from pydantic import BaseModel, validator
 from pydantic.fields import FieldInfo
@@ -14,6 +14,7 @@ __all__ = [
     "Factory",
     "instance_list_factory",
     "maybe_relative_path",
+    "required_xor",
     "FieldConverterError",
     "FieldConverter",
     "update_forward_refs_recursive",
@@ -45,6 +46,26 @@ def maybe_relative_path(fields: T_MaybeList[str], root_path: Path):
         return path
 
     return validator(*fields, allow_reuse=True)(validate_fn)
+
+
+def required_xor(fields: T_MaybeList[str], xor_other_fields: T_MaybeList[str]):
+    fields = ensure_list(fields)
+    xor_other_fields = ensure_list(xor_other_fields)
+
+    def validate_fn(value: Any, values: dict[str, Any]):
+        other_fields_exist = all(
+            values.get(name) is not None for name in xor_other_fields
+        )
+        if other_fields_exist is (value is not None):
+            raise ValueError(
+                f"Either {fields} or {xor_other_fields} are required, but not both "
+                f"sets of options"
+            )
+        return value
+
+    return validator(*fields, pre=True, always=True, whole=True, allow_reuse=True)(
+        validate_fn
+    )
 
 
 class FieldConverterError(Exception):

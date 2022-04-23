@@ -4,7 +4,7 @@ from functools import cached_property
 import logging
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Optional
 
 import pendulum as pen
 from pendulum.tz.timezone import Timezone
@@ -54,12 +54,25 @@ class Config(BaseModel):
         class _Modules(BaseModel):
             class _Floodgate(BaseModel):
                 class _Channel(BaseModel):
-                    class Config:
-                        arbitrary_types_allowed = True
+                    class _GateOpen(BaseModel):
+                        timezone: TimezoneField
+                        duration: DurationField
 
-                    timezone: TimezoneField
-                    gate_open_time: TimeField
-                    gate_open_duration: DurationField
+                        time: Optional[TimeField] = None
+                        # OR
+                        time_window_start: Optional[TimeField] = None
+                        time_window_end: Optional[TimeField] = None
+
+                        _norm_times = required_xor(
+                            ["time_window_start", "time_window_end"], "time"
+                        )
+
+                    class _Messages(BaseModel):
+                        open: str
+                        close: str
+
+                    gate_open: _GateOpen = Factory(_GateOpen)
+                    messages: _Messages = Factory(_Messages)
 
                 channels: dict[int, _Channel] = Factory(dict)
 

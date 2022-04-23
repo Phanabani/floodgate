@@ -1,16 +1,19 @@
 from pathlib import Path
 from typing import Any, Callable, Optional, Type, TypeVar, Union
 
-from pydantic import BaseModel, validator as validator_base
+from pydantic import BaseModel, validator
 from pydantic.fields import FieldInfo
 
-from floodgate.common.typing import get_function_args_annotations
+from floodgate.common.typing import (
+    T_MaybeList,
+    ensure_list,
+    get_function_args_annotations,
+)
 
 __all__ = [
     "Factory",
     "instance_list_factory",
     "maybe_relative_path",
-    "validator_partial",
     "FieldConverterError",
     "FieldConverter",
     "update_forward_refs_recursive",
@@ -31,30 +34,17 @@ def instance_list_factory(class_: Type[V], *args, **kwargs) -> Callable[[], list
     return make_list
 
 
-def maybe_relative_path(path: Union[Path, str], root_path: Path):
-    if not isinstance(path, Path):
-        path = Path(path)
-    if not path.is_absolute():
-        return root_path / path
-    return path
+def maybe_relative_path(fields: T_MaybeList[str], root_path: Path):
+    fields = ensure_list(fields)
 
+    def validate_fn(path: Union[Path, str]):
+        if not isinstance(path, Path):
+            path = Path(path)
+        if not path.is_absolute():
+            return root_path / path
+        return path
 
-def validator_partial(
-    field: str,
-    func: Callable[[Any, ...], Any],
-    *func_args,
-    validator_kw: Optional[dict[str, Any]] = None,
-    **func_kwargs,
-):
-    # noinspection PyUnusedLocal
-    def wrapper(value, values, config, field):
-        return func(value, *func_args, **func_kwargs)
-
-    validator_kw = validator_kw or {}
-    # Always wrap so we can skip function signature errors, such as:
-    # Invalid signature for validator: (##Signature##),
-    #   should be: (value, values, config, field)
-    return validator_base(field, allow_reuse=True, **validator_kw)(wrapper)
+    return validator(*fields, allow_reuse=True)(validate_fn)
 
 
 class FieldConverterError(Exception):

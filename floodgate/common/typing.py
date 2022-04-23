@@ -1,12 +1,25 @@
 import sys
 from types import FunctionType, MethodType
-from typing import Callable, Optional, Union, get_type_hints
+from typing import Callable, Optional, TypeVar, Union, get_type_hints
 
 __all__ = [
+    "T_MaybeList",
+    "ensure_list",
+    "T_Functionish",
     "get_function_annotations",
     "get_function_args_annotations",
     "get_function_return_type",
 ]
+
+V = TypeVar("V")
+T_MaybeList = Union[V, list[V]]
+
+
+def ensure_list(value_or_list: T_MaybeList[V]) -> list[V]:
+    if not isinstance(value_or_list, list):
+        return [value_or_list]
+    return value_or_list
+
 
 T_Functionish = Union[Callable, FunctionType, MethodType, classmethod, staticmethod]
 

@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any, Callable, Type, TypeVar, Union
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, ConfigError, root_validator, validator
 from pydantic.fields import FieldInfo
 
 from floodgate.common.typing import (
@@ -14,7 +14,7 @@ __all__ = [
     "Factory",
     "instance_list_factory",
     "maybe_relative_path",
-    "required_xor",
+    "only_one_of",
     "FieldConverterError",
     "FieldConverter",
     "update_forward_refs_recursive",
@@ -48,24 +48,70 @@ def maybe_relative_path(fields: T_MaybeList[str], root_path: Path):
     return validator(*fields, allow_reuse=True)(validate_fn)
 
 
-def required_xor(fields: T_MaybeList[str], xor_other_fields: T_MaybeList[str]):
-    fields = ensure_list(fields)
-    xor_other_fields = ensure_list(xor_other_fields)
+def only_one_of(
+    *groups_of_fields: T_MaybeList[str], need_all: Union[bool, list[bool]] = True
+):
+    """
+    A Pydantic root validator that ensures one and only one of the groups of
+    fields exists in the model.
 
-    def validate_fn(value: Any, values: dict[str, Any]):
-        other_fields_exist = all(
-            values.get(name) is not None for name in xor_other_fields
+    :param groups_of_fields: the groups of fields that you want one and only
+        one of. Each group may be either a list of field names or a single
+        field name.
+    :param need_all: whether the groups need all fields or just one to succeed.
+        If this arg is a bool, apply to all fields. If it's a list of bools,
+        each item will be matched up with the corresponding field group from
+        `groups_of_fields` (the list lengths must match).
+    """
+    if isinstance(need_all, list) and len(need_all) != len(groups_of_fields):
+        raise ConfigError(
+            "`need_all` must either be a bool or a list of bools of the same "
+            "length as `groups_of_fields`"
         )
-        if other_fields_exist is (value is not None):
-            raise ValueError(
-                f"Either {fields} or {xor_other_fields} are required, but not both "
-                f"sets of options"
-            )
-        return value
 
-    return validator(*fields, pre=True, always=True, whole=True, allow_reuse=True)(
-        validate_fn
-    )
+    groups_of_fields = list(groups_of_fields)
+    for idx, group in enumerate(groups_of_fields):
+        groups_of_fields[idx] = ensure_list(group)
+
+    def validate_fn(cls, values: dict[str, Any]):
+        a_group_succeeded = False
+
+        for idx, group in enumerate(groups_of_fields):
+            required: bool = need_all[idx] if isinstance(need_all, list) else need_all
+            existing_fields = [name in values for name in group]
+
+            # Ignore if no fields exist
+            if not any(existing_fields):
+                continue
+
+            # Two groups coexist, not allowed!
+            if a_group_succeeded:
+                raise ValueError(
+                    f"Only one of the following groups of fields is allowed: "
+                    f"{', '.join(groups_of_fields)}"
+                )
+
+            # Check that all fields exist if that was requested
+            if required and not all(existing_fields):
+                found = [name for name in group if name in values]
+                missing = [name for name in group if name not in values]
+                raise ValueError(
+                    f"The fields {found} exist, but the following are also "
+                    f"required and missing: {missing}"
+                )
+
+            # If we've made it here, this group has succeeded
+            a_group_succeeded = True
+
+        if not a_group_succeeded:
+            raise ValueError(
+                f"One and only one for the following groups must exist: "
+                f"{', '.join(groups_of_fields)}"
+            )
+
+        return values
+
+    return root_validator(pre=True, allow_reuse=True)(validate_fn)
 
 
 class FieldConverterError(Exception):

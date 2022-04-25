@@ -88,7 +88,7 @@ def only_one_of(
             if a_group_succeeded:
                 raise ValueError(
                     f"Only one of the following groups of fields is allowed: "
-                    f"{', '.join(groups_of_fields)}"
+                    f"{', '.join(map(str, groups_of_fields))}"
                 )
 
             # Check that all fields exist if that was requested
@@ -105,8 +105,8 @@ def only_one_of(
 
         if not a_group_succeeded:
             raise ValueError(
-                f"One and only one for the following groups must exist: "
-                f"{', '.join(groups_of_fields)}"
+                f"One and only one of the following groups must exist: "
+                f"{', '.join(map(str, groups_of_fields))}"
             )
 
         return values

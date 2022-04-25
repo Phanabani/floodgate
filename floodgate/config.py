@@ -63,8 +63,10 @@ class Config(BaseModel):
                         time_window_start: Optional[TimeField] = None
                         time_window_end: Optional[TimeField] = None
 
-                        _norm_times = required_xor(
-                            ["time_window_start", "time_window_end"], "time"
+                        _check_one_of_times = only_one_of(
+                            "time",
+                            ["time_window_start", "time_window_end"],
+                            need_all=[True, False],
                         )
 
                     class _Messages(BaseModel):

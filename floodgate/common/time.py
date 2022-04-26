@@ -1,10 +1,15 @@
+from random import randint
 import re
 from typing import Type, TypeVar
 
 import pendulum as pen
 import pytimeparse
 
-__all__ = ["parse_time", "parse_duration"]
+__all__ = [
+    "parse_time",
+    "parse_duration",
+    "random_time",
+]
 
 time_pattern = re.compile(
     r"^"
@@ -64,3 +69,12 @@ def parse_duration(duration_str: str, class_: Type[V] = pen.Duration) -> V:
     if seconds is None:
         raise ValueError("Invalid time duration")
     return class_(seconds=seconds)
+
+
+def random_time(start: pen.Time, end: pen.Time) -> pen.Time:
+    if end < start:
+        raise ValueError("end must be a time after start")
+    hour = randint(start.hour, end.hour)
+    minute = randint(start.minute, end.minute)
+    second = randint(start.second, end.second)
+    return pen.time(hour, minute, second)

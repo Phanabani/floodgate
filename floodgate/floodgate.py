@@ -33,6 +33,8 @@ class Floodgate(commands.Bot):
             description=config.description,
         )
 
+        self.modules_config = config.modules
+
         self.load_extension("floodgate.gate")
 
     async def on_connect(self):

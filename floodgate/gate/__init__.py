@@ -1,7 +1,6 @@
-from discord.ext.commands import Bot
-
+from floodgate.floodgate import Floodgate
 from .cog import Gate
 
 
-def setup(bot: Bot):
-    bot.add_cog(Gate(bot))
+def setup(bot: Floodgate):
+    bot.add_cog(Gate(bot, config=bot.modules_config.floodgate))

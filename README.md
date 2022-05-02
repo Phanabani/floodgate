@@ -43,14 +43,8 @@ poetry install --no-root --no-dev
 
 ### Set up configuration
 
-Create a yaml file `floodgate/config.yml` (or copy [floodgate/config_example.yml](floodgate/config_example.yml)).
-The only value you need to set is the `bot_token`.
-
-```yaml
-bot_token: YOUR_BOT_TOKEN
-```
-
-See [config](#config) for more info.
+See [Config](docs/config.md) for detailed information about setting up the
+config file.
 
 ### Running Floodgate
 
@@ -80,17 +74,7 @@ Floodgate requires the following permissions to run normally:
 
 - Send messages
 - Send messages in threads
-- Manage messages
-
-## Config
-
-Floodgate can be configured with a YAML file at `floodgate/config.yml`.
-[floodgate/config_example.yml](floodgate/config_example.yml) contains
-default values and can be used as a template. `bot_token` is the only required
-field.
-
-See [Config](docs/config.md) for detailed information about setting up the
-config file.
+- Manage messages (to delete messages in closed gate channels)
 
 ## Commands
 

@@ -18,7 +18,7 @@ logger = logging.getLogger("floodgate")
 class Floodgate(commands.Bot):
     def __init__(self, config: Config._Bot):
 
-        intents = discord.Intents(guilds=True)
+        intents = discord.Intents(guilds=True, messages=True)
         allowed_mentions = discord.AllowedMentions(users=True)
         activity = discord.Game(f"{config.command_prefix}help")
 

@@ -43,7 +43,17 @@ class GateController:
         self._channel = channel
         self._config = config
 
+        self._closed = True
+
         self._schedule_tasks()
+
+    @property
+    def closed(self) -> bool:
+        return self._closed
+
+    @property
+    def scheduled(self):
+        return self._open_gate_task is not None
 
     def _schedule_tasks(self):
         open_delay, close_delay = self._get_delay_times()
@@ -76,10 +86,12 @@ class GateController:
 
     async def _on_open(self, sleep_time: float):
         await asyncio.sleep(sleep_time)
+        self._closed = False
         await self._try_send_message(self._config.messages.open)
 
     async def _on_close(self, sleep_time: float):
         await asyncio.sleep(sleep_time)
+        self._closed = True
         await self._try_send_message(self._config.messages.close)
 
     async def _try_send_message(self, msg: str):
@@ -90,9 +102,6 @@ class GateController:
                 f"Failed to send gate open message (channel_id={self._channel.id})",
                 exc_info=e,
             )
-
-    def is_scheduled(self):
-        return self._open_gate_task is not None
 
     def cancel(self):
         if self._open_gate_task is not None:
@@ -106,7 +115,7 @@ class GateController:
 class Gate(commands.Cog):
     def __init__(self, bot: commands.Bot, config: FloodgateConfig):
         self._bot = bot
-        self._tasks: dict[int, GateController] = {}
+        self._gates: dict[int, GateController] = {}
         self._config = None
         self.set_config(config)
 
@@ -137,18 +146,43 @@ class Gate(commands.Cog):
             if channel is None:
                 logger.warning(f"Channel with ID {channel_id} cannot be found")
                 continue
-            self._tasks[channel_id] = task = GateController(
+            self._gates[channel_id] = task = GateController(
                 self._bot.loop, channel, channel_config
             )
-            if task.is_scheduled():
+            if task.scheduled:
                 scheduled_count += 1
         logger.info(f"{scheduled_count} gate openings scheduled for today")
 
-    async def _try_cancel_task(self, channel_id):
-        if channel_id in self._tasks:
-            logger.info(f"Canceling gate open task (channel_id={channel_id})")
-            self._tasks[channel_id].cancel()
-            del self._tasks[channel_id]
+    async def _try_delete_gate(self, channel_id: int):
+        if channel_id not in self._gates:
+            return
+        logger.info(f"Canceling gate opening (channel_id={channel_id})")
+        self._gates[channel_id].cancel()
+        del self._gates[channel_id]
+
+    @commands.Cog.listener(name="on_message")
+    async def leak_prevention(self, msg: discord.Message):
+        """Delete new messages in channels with closed floodgates"""
+        if msg.author.id == self._bot.user.id:
+            return
+
+        try:
+            gate = self._gates[msg.channel.id]
+        except KeyError:
+            return
+
+        if not gate.closed:
+            return
+
+        try:
+            await msg.delete()
+        except (discord.Forbidden, discord.NotFound, discord.HTTPException) as e:
+            logger.error(
+                f"Failed to delete message in channel with a closed floodgate "
+                f"(message_id={msg.id}, channel={msg.channel.name}, "
+                f"guild={msg.guild.name})",
+                exc_info=e,
+            )
 
     @commands.command()
     async def ping(self, context: commands.Context):

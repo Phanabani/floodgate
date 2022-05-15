@@ -126,6 +126,21 @@ class Gate(commands.Cog):
     async def _init_daily_loop(self):
         await self._bot.wait_until_ready()
         self._daily_loop.stop()
+
+        # Schedule once, then wait until midnight to schedule again
+        await self._schedule_todays_gate_openings()
+        tomorrow = pen.today() + pen.duration(days=1)
+        tomorrows_midnight = pen.datetime(
+            tomorrow.year,
+            tomorrow.month,
+            tomorrow.day,
+            0,
+            0,
+            0,
+            tz=pen.local_timezone(),
+        )
+        time_till_midnight = tomorrows_midnight - pen.now()
+        await asyncio.sleep(time_till_midnight)
         self._daily_loop.start()
 
     @tasks.loop(hours=24)
